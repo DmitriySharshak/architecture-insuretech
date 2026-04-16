@@ -1,0 +1,46 @@
+@startuml
+!include <C4/C4_Container.puml>
+!include <C4/C4_Context.puml>
+
+title InsureTech (to‑be)
+
+Person(user, "Клиент / B2B партнёр", "Пользуется сайтом или API")
+
+System_Boundary(insuretech, "InsureTech System") {
+    Container(webapp, "Веб-приложение", "React + CDN", "Фронтенд для пользователей")
+    
+    Container(core, "core-app", "Spring Boot / Node.js", "Оформление страховок, ЛК")
+    Container(aggregator, "ins-product-aggregator", "Spring Boot", "Интеграция со страховыми")
+    Container(settlement, "ins-comp-settlement", "Spring Boot", "Взаиморасчёты")
+    
+    ContainerDb(coreDb, "core-app DB", "PostgreSQL", "Данные клиентов, заявок")
+    ContainerDb(aggDb, "aggregator DB", "PostgreSQL", "Продукты, тарифы")
+    
+    Container(broker, "Event Broker", "Kafka / RabbitMQ", "Topics: products.updated, policies.created")
+}
+
+System_Ext(insurance1, "Страховая компания 1", "REST API")
+System_Ext(insurance2, "Страховая компания N", "REST API")
+System_Ext(partner, "B2B партнёр", "использует API")
+
+Rel(user, webapp, "HTTPS", "REST")
+Rel(partner, core, "HTTPS", "API")
+Rel(webapp, core, "вызывает", "REST")
+
+Rel(core, coreDb, "Запросы", "JDBC")
+Rel(aggregator, aggDb, "Запросы", "JDBC")
+
+Rel(aggregator, insurance1, "запрос продуктов", "REST")
+Rel(aggregator, insurance2, "запрос продуктов", "REST")
+
+' Публикация событий (прямая, без outbox)
+Rel(core, broker, "publish policies.created", "async / at-least-once")
+Rel(aggregator, broker, "publish products.updated", "async / at-least-once")
+
+' Подписки
+Rel(broker, core, "subscribe products.updated", "async")
+Rel(broker, settlement, "subscribe products.updated", "async")
+Rel(broker, settlement, "subscribe policies.created", "async")
+
+
+@enduml
