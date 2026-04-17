@@ -1,0 +1,68 @@
+﻿"""
+Сервис управления клиентскими данными
+Поддерживает гибкую выборку данных клиента одним запросом
+"""
+type Query {
+  """
+  Получить клиента по ID с возможностью вложенной выборки связанных данных
+  Эквивалент: GET /clients/{id}
+  """
+  client(id: ID!): Client
+  
+  """
+  Получить документы клиента (если нужны только документы без данных клиента)
+  Эквивалент: GET /clients/{id}/documents
+  """
+  clientDocuments(clientId: ID!): [Document!]!
+  
+  """
+  Получить родственников клиента (если нужны только родственники)
+  Эквивалент: GET /clients/{id}/relatives
+  """
+  clientRelatives(clientId: ID!): [Relative!]!
+}
+
+"""
+Основная сущность "Клиент"
+Объединяет базовую информацию + связанные данные
+"""
+type Client {
+  id: ID!
+  name: String!
+  age: Int!
+  
+  """
+  Связанные документы клиента
+  Загружаются только если запрошены в GraphQL-запросе
+  """
+  documents: [Document!]!
+  
+  """
+  Связанные родственники клиента
+  Загружаются только если запрошены в GraphQL-запросе
+  """
+  relatives: [Relative!]!
+}
+
+"""
+Сущность "Документ"
+Полностью соответствует REST-модели
+"""
+type Document {
+  id: ID!
+  type: String!
+  number: String!
+  issueDate: String!
+  expiryDate: String!
+}
+
+"""
+Сущность "Родственник"
+Полностью соответствует REST-модели
+"""
+type Relative {
+  id: ID!
+  relationType: String!
+  name: String!
+  age: Int!
+}
